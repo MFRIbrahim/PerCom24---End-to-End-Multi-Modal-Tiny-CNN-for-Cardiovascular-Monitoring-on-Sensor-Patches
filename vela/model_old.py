@@ -28,7 +28,7 @@ class ShiftScaleLayer(tf.keras.layers.Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape[0]
-
+    
 def _inverted_res_block(inputs, kernel_size, expansion, stride, alpha, filters, block_id, activation="RE"):
     in_channels = K.int_shape(inputs)[-1]
     pointwise_conv_filters = int(filters*alpha)
@@ -38,11 +38,11 @@ def _inverted_res_block(inputs, kernel_size, expansion, stride, alpha, filters, 
 
     if block_id:
         # Expand
-        x = layers.Conv2D(expansion, kernel_size=1, padding='same', use_bias=False, activation=None, name=prefix + 'expand')(x)
+        x = layers.Conv2D(expansion*in_channels, kernel_size=1, padding='same', use_bias=False, activation=None, name=prefix + 'expand')(x)
         x = layers.BatchNormalization(epsilon=1e-3, momentum=0.999, name=prefix + 'expand_BN')(x)
         if activation == "RE":
             x = layers.ReLU(name=prefix + 'expand_relu')(x)
-        else:
+        else: 
             x = Hswish()(x)
     else:
         prefix = 'expanded_conv_'
@@ -50,7 +50,7 @@ def _inverted_res_block(inputs, kernel_size, expansion, stride, alpha, filters, 
     # Depthwise
     if stride == 2:
         x = layers.ZeroPadding2D(padding=_correct_pad(x, (3, 3)), name=prefix + 'pad')(x)
-
+        
     x = layers.DepthwiseConv2D(kernel_size=kernel_size,
                         strides=stride,
                         activation=None,
@@ -60,7 +60,7 @@ def _inverted_res_block(inputs, kernel_size, expansion, stride, alpha, filters, 
     x = layers.BatchNormalization(epsilon=1e-3, momentum=0.999, name=prefix + 'depthwise_BN')(x)
     if activation == "RE":
         x = layers.ReLU(name=prefix + 'depthwise_relu')(x)
-    else:
+    else: 
         x = Hswish()(x)
 
     # Project
@@ -75,7 +75,7 @@ def _inverted_res_block(inputs, kernel_size, expansion, stride, alpha, filters, 
     if in_channels == pointwise_filters and stride == 1:
         return layers.Add(name=prefix + 'add')([inputs, x])
     return x
- 
+
 
 def _correct_pad(inputs, kernel_size):
     """Returns a tuple for zero-padding for 2D convolution with downsampling.
@@ -98,7 +98,6 @@ def _correct_pad(inputs, kernel_size):
     return ((correct[0] - adjust[0], correct[0]),
             (correct[1] - adjust[1], correct[1]))
 
-
 def _make_divisible(v, divisor, min_value=None):
     if min_value is None:
         min_value = divisor
@@ -107,7 +106,6 @@ def _make_divisible(v, divisor, min_value=None):
     if new_v < 0.9 * v:
         new_v += divisor
     return new_v
- 
 
 def get_model(init_scale1, init_scale2, init_shift1, init_shift2):
     input1 = layers.Input(shape=(1, 128, 1))
@@ -115,21 +113,19 @@ def get_model(init_scale1, init_scale2, init_shift1, init_shift2):
     scaled1 = ShiftScaleLayer(init_shift1, init_scale1)(input1)
     scaled2 = ShiftScaleLayer(init_shift2, init_scale2)(input2)
     merged = layers.Concatenate(axis=2)([scaled1, scaled2])
-    conv1 = layers.Conv2D(filters=16, kernel_size=(1, 3), strides=(1, 2))(merged)
+    conv1 = layers.Conv2D(filters=8, kernel_size=(1, 3), strides=(1, 2))(merged)
     bn1 = layers.BatchNormalization()(conv1)
 
     x = Hswish()(bn1)
-    x = _inverted_res_block(x, kernel_size=(1,3), filters=16, alpha=1, stride=1, expansion=16, activation="RE", block_id=0)
-    x = _inverted_res_block(x, kernel_size=(1,3), filters=24, alpha=1, stride=1, expansion=72, activation="RE", block_id=1)
-    x = _inverted_res_block(x, kernel_size=(1,3), filters=24, alpha=1, stride=1, expansion=88, activation="RE", block_id=2)
-    x = _inverted_res_block(x, kernel_size=(1,5), filters=40, alpha=1, stride=1, expansion=96, activation="HS", block_id=3)
+    x = _inverted_res_block(x, kernel_size=(1,3), filters=8, alpha=1, stride=1, expansion=1, activation="RE", block_id=0)
+    x = _inverted_res_block(x, kernel_size=(1,3), filters=16, alpha=1, stride=1, expansion=3, activation="RE", block_id=1)
+    x = _inverted_res_block(x, kernel_size=(1,3), filters=16, alpha=1, stride=1, expansion=3, activation="RE", block_id=2)
+    x = _inverted_res_block(x, kernel_size=(1,3), filters=24, alpha=1, stride=1, expansion=3, activation="HS", block_id=3)
     x = layers.GlobalAveragePooling2D()(x)
     output = layers.Dense(2)(x)
     return tf.keras.models.Model(inputs=[input1, input2], outputs=output)
 
- 
-
 if __name__ == "__main__":
     model = get_model(0.1, 0.1, 0.1, 0.1)
-    model.build(input_shape=[(1, 128, 1), (1, 128, 1)])
+    model.build((1, 12000, 1))
     model.summary()

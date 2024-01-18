@@ -14,11 +14,10 @@ converter.target_spec.supported_types = [tf.int8]
 converter.inference_input_type = tf.int8
 converter.inference_output_type = tf.int8
 tflite_rep = converter.convert()
-tflite_model_path = "./tf/model.tflite"
+tflite_model_path = "./model.tflite"
 open(tflite_model_path, "wb").write(tflite_rep)
 tf.lite.experimental.Analyzer.analyze(model_content=tflite_rep)
 model.summary()
 
 
-#os.system("vela --output-dir {} --config ./velaL.ini --system-config MinskyL --memory-mode MinskyL --cpu-tensor-alignment 128 {}".format('./tf', tflite_model_path))
-os.system("vela --output-dir {} --config vela.ini --accelerator-config ethos-u55-32  --system-config Minsky --memory-mode Minsky --cpu-tensor-alignment 128 {}".format('./tf', tflite_model_path))
+os.system("vela --output-dir {} --config ./vela.ini --accelerator-config ethos-u55-32  --system-config CustomVela --memory-mode CustomVela --cpu-tensor-alignment 128 {}".format('./tf', tflite_model_path))
