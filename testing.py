@@ -38,7 +38,10 @@ def main():
     input_size = int(input_list[1])
     conf = (0., 1., -100., 0.01, input_size, modality)
     net = M.TinyCNN(conf).to(DEVICE)
-    checkpoint = torch.load(net_path)
+    if DEVICE == "cpu":
+        checkpoint = torch.load(net_path, map_location=torch.device('cpu'))
+    else:
+        checkpoint = torch.load(net_path)
     net.load_state_dict(checkpoint['model_state_dict'])
 
     if input_size == 6000:
@@ -69,7 +72,7 @@ def main():
     roc_coordinates = []
     indx = 0
     for threshold in thresholds:
-        print(indx)
+        print(indx+1, "/ 100")
         indx += 1
         results = val(val_loader, net, threshold)
         metrics, coords = utils.get_metrics(results, threshold)
