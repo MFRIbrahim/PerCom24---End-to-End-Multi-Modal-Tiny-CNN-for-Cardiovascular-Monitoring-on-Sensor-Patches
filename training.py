@@ -89,7 +89,7 @@ def main():
     
     old_acc = -1
     for i in range(current_epoch, n_epochs):
-        print(i)
+        print(i+1, "/ 300")
         train_loss = train(train_loader, net, optimizer)
         eval_loss, acc = val(val_loader, net)
         print(train_loss, eval_loss, acc, old_acc)

@@ -168,7 +168,7 @@ def main():
     old_acc = -1
     print("old accuracy:", old_acc)
     for i in range(current_epoch, n_epochs):
-        print(i)
+        print(i+1, "/ 400")
         train_loss = train(train_loader, net, optimizer, afftr_params, modality)
         net.eval()
         net_quant = torch.quantization.convert(net)
