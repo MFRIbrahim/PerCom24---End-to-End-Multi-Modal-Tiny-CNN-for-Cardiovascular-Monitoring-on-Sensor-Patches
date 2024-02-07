@@ -1,4 +1,4 @@
-name: tf
+name: environment_vela
 channels:
   - pytorch
   - numba
