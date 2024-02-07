@@ -1,16 +1,9 @@
 # PerCom24---End-to-End-Multi-Modal-Tiny-CNN-for-Cardiovascular-Monitoring-on-Sensor-Patches
 Code Artifact for the PerCom 2024
 
-To use the conda environments please go through the following steps:
-
-For `environment.yaml` execute
+To use the conda environments execute
 ```
-conda env create -f environment.yaml
-conda activate deep_learning
+conda env create -f NAME.yaml
+conda activate NAME
 ```
-
-For `environment_vela.yaml` execute
-```
-conda env create -f environment_vela.yaml
-conda activate tf
-```
+and replace `NAME` with either `environment` or `environment_vela`.
